@@ -1,0 +1,95 @@
+﻿@page "/"
+
+@using Application;
+@using Application.Contracts;
+
+<PageTitle>Game of Life</PageTitle>
+
+<h1>Game of Life</h1>
+
+<button class="btn btn-primary" @onclick="NextGeneration">Next generation</button>
+<button class="btn btn-primary" @onclick="AutoGeneration">Auto generation</button>
+<button class="btn btn-primary" @onclick="RandomGeneration">Random generation</button>
+<button class="btn btn-primary" @onclick="DeadGeneration">Dead generation</button>
+
+<div class="container" style="margin-top:20px">
+    @for (var row = 0; row < rows; row++)
+    {
+        <div class="row" style="width:500px">
+            @for (int column = 0; column < columns; column++)
+            {
+                var x = row;
+                var y = column;
+
+                <div class="col cell @GetClass(universe.GetCell(row, column))"
+                     data-row="@row"
+                     data-column="@column"
+             @onclick="() => SetCell(x, y)">
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private static int rows = 50;
+    private static int columns = 50;
+    private bool autoGenerate = false;
+
+    private Universe universe = new Universe(rows, columns);
+
+    protected override void OnInitialized()
+    {
+        universe.InitializeRandom();
+    }
+
+    public async Task AutoGeneration()
+    {
+        autoGenerate = true;
+
+        while (autoGenerate)
+        {
+            await Task.Delay(100);
+            universe.NewGeneration();
+            StateHasChanged();
+        }
+    }
+
+    public void NextGeneration()
+    {
+        autoGenerate = false;
+        universe.NewGeneration();
+    }
+
+    public void RandomGeneration()
+    {
+        autoGenerate = false;
+        universe.InitializeRandom();
+    }
+
+    public void DeadGeneration()
+    {
+        autoGenerate = false;
+        universe.InitializeDead();
+    }
+
+    public string GetClass(ICell cell)
+        => (cell is LiveCell) ? "cell-dead" : string.Empty;
+
+    public void SetCell(int row, int column)
+    {
+        autoGenerate = false;
+
+        if (universe.GetCell(row, column) is LiveCell)
+        {
+            universe.AddDead(row, column);
+        }
+        else
+        {
+            universe.AddLiving(row, column);
+        }
+
+        StateHasChanged();
+    }
+}
+
